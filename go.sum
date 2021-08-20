@@ -946,6 +946,7 @@ github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a/go.mod h1:pHhQN
 github.com/lyft/protoc-gen-star v0.4.10/go.mod h1:mE8fbna26u7aEA2QCVvvfBU/ZrPgocG1206xAFPcs94=
 github.com/lyft/protoc-gen-star v0.4.14/go.mod h1:mE8fbna26u7aEA2QCVvvfBU/ZrPgocG1206xAFPcs94=
 github.com/lyft/protoc-gen-star v0.5.1/go.mod h1:9toiA3cC7z5uVbODF7kEQ91Xn7XNFkVUl+SrEe+ZORU=
+github.com/lyft/protoc-gen-star v0.5.2/go.mod h1:9toiA3cC7z5uVbODF7kEQ91Xn7XNFkVUl+SrEe+ZORU=
 github.com/lyft/protoc-gen-star v0.5.3/go.mod h1:V0xaHgaf5oCCqmcxYcWiDfTiKsZsRc87/1qhoTACD8w=
 github.com/lyft/protoc-gen-validate v0.0.13/go.mod h1:XbGvPuh87YZc5TdIa2/I4pLk0QoUACkjt2znoq26NVQ=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
@@ -1320,6 +1321,7 @@ github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a/go.mod h1:s
 github.com/smartystreets/goconvey v1.6.4/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
 github.com/solo-io/anyvendor v0.0.1/go.mod h1:SLucIeU8qBOYI82BveNVn2LzZFcMWJSCf8Kd1S4Jcr4=
+github.com/solo-io/anyvendor v0.0.3/go.mod h1:xHZ0KMrsG620iI4VnRDJGJ1gk8bR79HG/tlTWfY15UA=
 github.com/solo-io/anyvendor v0.0.4 h1:9nI7o7Srml2uaOpT5HJSru06IHUZpzSCU/dEkseiGa4=
 github.com/solo-io/anyvendor v0.0.4/go.mod h1:+TTkDGd11u8ugXccqtukBEWvkZkODaBbeWgdH/F/IWY=
 github.com/solo-io/cue v0.4.1-0.20210622213027-95a50cebaffb h1:XOzWBmeDaXAL7EUHp7niQJKo9f2UwnVKdaVuvr+PwpI=
@@ -1342,6 +1344,9 @@ github.com/solo-io/k8s-utils v0.0.11/go.mod h1:Cg2ymG0xhLdyS3NJ0D98yxiSWjAKYPNop
 github.com/solo-io/protoc-gen-ext v0.0.13/go.mod h1:/U/jMDtVI7R6N323sfaUXK9Mmo54D7SY3pP7JtI/kMo=
 github.com/solo-io/protoc-gen-ext v0.0.15 h1:OVPo1essSt2hx5crEfnRxYlA5mwsGvrIWynNQDR/4xo=
 github.com/solo-io/protoc-gen-ext v0.0.15/go.mod h1:ch1ZUyVtN45zxAVwpuZUW+F1IR7aG0rCVAp2JrWKDCc=
+github.com/solo-io/skv2 v0.18.3/go.mod h1:yTLh572dJGj9gQJ0GpzGEIHntdINzq8rD79jrKeBz2g=
+github.com/solo-io/skv2 v0.19.4-0.20210820150921-d9f0c07aa2f3 h1:aGsWfpKUGxY9mvv8VvdTYmmf7Od+fYdtCyZIPiVLVUw=
+github.com/solo-io/skv2 v0.19.4-0.20210820150921-d9f0c07aa2f3/go.mod h1:l9i3SVv0KexUGrXyJHhke36tc8qR+C1fMSmt+xsDdA0=
 github.com/solo-io/solo-apis v1.6.31 h1:U+qNzQTMIxuHBr6RvmKG4JwJbnZBW5No5vDDkvoKa5Q=
 github.com/solo-io/solo-apis v1.6.31/go.mod h1:EPsm1LmDszRRw9UMJm/6HLBtUd2CiAHGhP4tO682ZE0=
 github.com/solo-io/solo-kit v0.21.0 h1:NhVyzchGNwj3FoC7aEHQK7GrhXprfUUSr2NVxD1XbQs=
@@ -1355,6 +1360,7 @@ github.com/spf13/afero v1.1.2/go.mod h1:j4pytiNVoe2o6bmDsKpLACNPDBIoEAkihy7loJ1B
 github.com/spf13/afero v1.2.2/go.mod h1:9ZxEEn6pIJ8Rxe320qSDBk6AsU0r9pR7Q4OcevTdifk=
 github.com/spf13/afero v1.3.3/go.mod h1:5KUK8ByomD5Ti5Artl0RtHeI5pTF7MIDuXL3yY520V4=
 github.com/spf13/afero v1.3.4/go.mod h1:Ai8FlHk4v/PARR026UzYexafAt9roJ7LcLMAmO6Z93I=
+github.com/spf13/afero v1.5.1/go.mod h1:Ai8FlHk4v/PARR026UzYexafAt9roJ7LcLMAmO6Z93I=
 github.com/spf13/afero v1.6.0 h1:xoax2sJ2DT8S8xA2paPFjDCScCNeWsg75VG0DLRreiY=
 github.com/spf13/afero v1.6.0/go.mod h1:Ai8FlHk4v/PARR026UzYexafAt9roJ7LcLMAmO6Z93I=
 github.com/spf13/cast v1.3.0/go.mod h1:Qx5cxh0v+4UWYiBimWS+eyWzqEqokIECu5etghLkUJE=
