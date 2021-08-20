@@ -138,6 +138,7 @@ func Start(
 
 	r := &networkingReconciler{
 		ctx:                        ctx,
+		cfg:                        mgr.GetConfig(),
 		localBuilder:               localBuilder,
 		remoteBuilder:              remoteBuilder,
 		applier:                    applier,
