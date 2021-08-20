@@ -29,7 +29,7 @@ import (
 
 // this error can occur if constructing a Partitioned Snapshot from a resource
 // that is missing the partition label
-var MissingRequiredLabelError = func(labelKey, gvk schema.GroupVersionKind, obj ezkube.ResourceId) error {
+var MissingRequiredLabelError = func(labelKey string, gvk schema.GroupVersionKind, obj ezkube.ResourceId) error {
 	return eris.Errorf("expected label %v not on labels of %v %v", labelKey, gvk.String(), sets.Key(obj))
 }
 
@@ -102,6 +102,7 @@ func NewSnapshot(
 func NewLabelPartitionedSnapshot(
 	name,
 	labelKey string, // the key by which to partition the resources
+	gvk schema.GroupVersionKind,
 
 	certificateRequests certificates_mesh_gloo_solo_io_v1_sets.CertificateRequestSet,
 
@@ -109,11 +110,11 @@ func NewLabelPartitionedSnapshot(
 	clusters ...string, // the set of clusters to apply the snapshot to. only required for multicluster snapshots.
 ) (Snapshot, error) {
 
-	partitionedCertificateRequests, err := partitionCertificateRequestsByLabel(labelKey, certificateRequests)
+	partitionedCertificateRequests, err := partitionCertificateRequestsByLabel(labelKey, gvk, certificateRequests)
 	if err != nil {
 		return nil, err
 	}
-	partitionedSecrets, err := partitionSecretsByLabel(labelKey, secrets)
+	partitionedSecrets, err := partitionSecretsByLabel(labelKey, gvk, secrets)
 	if err != nil {
 		return nil, err
 	}
@@ -229,16 +230,16 @@ func (s *snapshot) ForEachObject(handleObject func(cluster string, gvk schema.Gr
 	}
 }
 
-func partitionCertificateRequestsByLabel(labelKey string, set certificates_mesh_gloo_solo_io_v1_sets.CertificateRequestSet) ([]LabeledCertificateRequestSet, error) {
+func partitionCertificateRequestsByLabel(labelKey string, gvk schema.GroupVersionKind, set certificates_mesh_gloo_solo_io_v1_sets.CertificateRequestSet) ([]LabeledCertificateRequestSet, error) {
 	setsByLabel := map[string]certificates_mesh_gloo_solo_io_v1_sets.CertificateRequestSet{}
 
 	for _, obj := range set.List() {
 		if obj.Labels == nil {
-			return nil, MissingRequiredLabelError(labelKey, "CertificateRequest", obj)
+			return nil, MissingRequiredLabelError(labelKey, gvk, obj)
 		}
 		labelValue := obj.Labels[labelKey]
 		if labelValue == "" {
-			return nil, MissingRequiredLabelError(labelKey, "CertificateRequest", obj)
+			return nil, MissingRequiredLabelError(labelKey, gvk, obj)
 		}
 
 		setForValue, ok := setsByLabel[labelValue]
@@ -273,16 +274,16 @@ func partitionCertificateRequestsByLabel(labelKey string, set certificates_mesh_
 	return partitionedCertificateRequests, nil
 }
 
-func partitionSecretsByLabel(labelKey string, set v1_sets.SecretSet) ([]LabeledSecretSet, error) {
+func partitionSecretsByLabel(labelKey string, gvk schema.GroupVersionKind, set v1_sets.SecretSet) ([]LabeledSecretSet, error) {
 	setsByLabel := map[string]v1_sets.SecretSet{}
 
 	for _, obj := range set.List() {
 		if obj.Labels == nil {
-			return nil, MissingRequiredLabelError(labelKey, "Secret", obj)
+			return nil, MissingRequiredLabelError(labelKey, gvk, obj)
 		}
 		labelValue := obj.Labels[labelKey]
 		if labelValue == "" {
-			return nil, MissingRequiredLabelError(labelKey, "Secret", obj)
+			return nil, MissingRequiredLabelError(labelKey, gvk, obj)
 		}
 
 		setForValue, ok := setsByLabel[labelValue]
@@ -527,7 +528,7 @@ type Builder interface {
 	GetSecrets() v1_sets.SecretSet
 
 	// build the collected outputs into a label-partitioned snapshot
-	BuildLabelPartitionedSnapshot(labelKey string) (Snapshot, error)
+	BuildLabelPartitionedSnapshot(labelKey string, gvk schema.GroupVersionKind) (Snapshot, error)
 
 	// build the collected outputs into a snapshot with a single partition
 	BuildSinglePartitionedSnapshot(snapshotLabels map[string]string) (Snapshot, error)
@@ -577,10 +578,11 @@ func (b *builder) GetSecrets() v1_sets.SecretSet {
 	return b.secrets
 }
 
-func (b *builder) BuildLabelPartitionedSnapshot(labelKey string) (Snapshot, error) {
+func (b *builder) BuildLabelPartitionedSnapshot(labelKey string, gvk schema.GroupVersionKind) (Snapshot, error) {
 	return NewLabelPartitionedSnapshot(
 		b.name,
 		labelKey,
+		gvk,
 
 		b.certificateRequests,
 

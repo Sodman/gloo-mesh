@@ -1196,18 +1196,18 @@ func (mr *MockBuilderMockRecorder) AddXdsConfigs(xdsConfigs ...interface{}) *gom
 }
 
 // BuildLabelPartitionedSnapshot mocks base method.
-func (m *MockBuilder) BuildLabelPartitionedSnapshot(labelKey string) (istio.Snapshot, error) {
+func (m *MockBuilder) BuildLabelPartitionedSnapshot(labelKey string, gvk schema.GroupVersionKind) (istio.Snapshot, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BuildLabelPartitionedSnapshot", labelKey)
+	ret := m.ctrl.Call(m, "BuildLabelPartitionedSnapshot", labelKey, gvk)
 	ret0, _ := ret[0].(istio.Snapshot)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // BuildLabelPartitionedSnapshot indicates an expected call of BuildLabelPartitionedSnapshot.
-func (mr *MockBuilderMockRecorder) BuildLabelPartitionedSnapshot(labelKey interface{}) *gomock.Call {
+func (mr *MockBuilderMockRecorder) BuildLabelPartitionedSnapshot(labelKey, gvk interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildLabelPartitionedSnapshot", reflect.TypeOf((*MockBuilder)(nil).BuildLabelPartitionedSnapshot), labelKey)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildLabelPartitionedSnapshot", reflect.TypeOf((*MockBuilder)(nil).BuildLabelPartitionedSnapshot), labelKey, gvk)
 }
 
 // BuildSinglePartitionedSnapshot mocks base method.

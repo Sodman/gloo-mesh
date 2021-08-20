@@ -55,7 +55,6 @@ func (opts *NetworkingReconcilerExtensionOpts) initDefaults(parameters bootstrap
 		opts.RegisterNetworkingReconciler = func(ctx context.Context, cfg *rest.Config, reconcile skinput.SingleClusterReconcileFunc, reconcileOpts input.ReconcileOptions) (skinput.InputReconciler, error) {
 			return input.RegisterInputReconciler(
 				ctx,
-				cfg,
 				parameters.Clusters,
 				func(id ezkube.ClusterResourceId) (bool, error) {
 					return reconcile(id)
