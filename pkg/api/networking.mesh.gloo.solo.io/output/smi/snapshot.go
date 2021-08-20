@@ -32,8 +32,8 @@ import (
 
 // this error can occur if constructing a Partitioned Snapshot from a resource
 // that is missing the partition label
-var MissingRequiredLabelError = func(labelKey, resourceKind string, obj ezkube.ResourceId) error {
-	return eris.Errorf("expected label %v not on labels of %v %v", labelKey, resourceKind, sets.Key(obj))
+var MissingRequiredLabelError = func(labelKey, gvk schema.GroupVersionKind, obj ezkube.ResourceId) error {
+	return eris.Errorf("expected label %v not on labels of %v %v", labelKey, gvk.String(), sets.Key(obj))
 }
 
 // SnapshotGVKs is a list of the GVKs included in this snapshot
@@ -507,9 +507,13 @@ func (l labeledTrafficSplitSet) Generic() output.ResourceList {
 	}
 
 	return output.ResourceList{
-		Resources:    desiredResources,
-		ListFunc:     listFunc,
-		ResourceKind: "TrafficSplit",
+		Resources: desiredResources,
+		ListFunc:  listFunc,
+		GVK: schema.GroupVersionKind{
+			Group:   "split.smi-spec.io",
+			Version: "v1alpha2",
+			Kind:    "TrafficSplit",
+		},
 	}
 }
 
@@ -575,9 +579,13 @@ func (l labeledTrafficTargetSet) Generic() output.ResourceList {
 	}
 
 	return output.ResourceList{
-		Resources:    desiredResources,
-		ListFunc:     listFunc,
-		ResourceKind: "TrafficTarget",
+		Resources: desiredResources,
+		ListFunc:  listFunc,
+		GVK: schema.GroupVersionKind{
+			Group:   "access.smi-spec.io",
+			Version: "v1alpha2",
+			Kind:    "TrafficTarget",
+		},
 	}
 }
 
@@ -643,9 +651,13 @@ func (l labeledHTTPRouteGroupSet) Generic() output.ResourceList {
 	}
 
 	return output.ResourceList{
-		Resources:    desiredResources,
-		ListFunc:     listFunc,
-		ResourceKind: "HTTPRouteGroup",
+		Resources: desiredResources,
+		ListFunc:  listFunc,
+		GVK: schema.GroupVersionKind{
+			Group:   "specs.smi-spec.io",
+			Version: "v1alpha3",
+			Kind:    "HTTPRouteGroup",
+		},
 	}
 }
 
