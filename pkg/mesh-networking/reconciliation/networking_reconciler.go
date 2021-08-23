@@ -375,7 +375,7 @@ func (r *networkingReconciler) translateAndSyncOutputs(ctx context.Context, in i
 	contextutils.LoggerFrom(ctx).Debugf("syncing outputs")
 	errHandler := newErrHandler(ctx, in)
 	verifier := verifier.NewOutputVerifier(ctx, r.cfg, map[schema.GroupVersionKind]verifier.ServerVerifyOption{
-		// only warn (avoids error) if ratelimitconfig resource is not available on cluster
+		// ignore if ratelimitconfig resource is not available on cluster
 		ratelimit.RateLimitConfigGVK: verifier.ServerVerifyOption_IgnoreIfNotPresent,
 	})
 	syncOpts := output.OutputOpts{
