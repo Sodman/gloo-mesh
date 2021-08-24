@@ -98,6 +98,11 @@ var SnapshotGVKs = []schema.GroupVersionKind{
 		Version: "v1beta1",
 		Kind:    "AuthorizationPolicy",
 	},
+	schema.GroupVersionKind{
+		Group:   "security.istio.io",
+		Version: "v1beta1",
+		Kind:    "PeerAuthentication",
+	},
 
 	schema.GroupVersionKind{
 		Group:   "ratelimit.solo.io",
@@ -129,6 +134,8 @@ type Snapshot interface {
 	Sidecars() []LabeledSidecarSet
 	// return the set of AuthorizationPolicies with a given set of labels
 	AuthorizationPolicies() []LabeledAuthorizationPolicySet
+	// return the set of PeerAuthentications with a given set of labels
+	PeerAuthentications() []LabeledPeerAuthenticationSet
 	// return the set of RateLimitConfigs with a given set of labels
 	RateLimitConfigs() []LabeledRateLimitConfigSet
 
@@ -161,6 +168,7 @@ type snapshot struct {
 	virtualServices       []LabeledVirtualServiceSet
 	sidecars              []LabeledSidecarSet
 	authorizationPolicies []LabeledAuthorizationPolicySet
+	peerAuthentications   []LabeledPeerAuthenticationSet
 	rateLimitConfigs      []LabeledRateLimitConfigSet
 	clusters              []string
 }
@@ -178,6 +186,7 @@ func NewSnapshot(
 	virtualServices []LabeledVirtualServiceSet,
 	sidecars []LabeledSidecarSet,
 	authorizationPolicies []LabeledAuthorizationPolicySet,
+	peerAuthentications []LabeledPeerAuthenticationSet,
 	rateLimitConfigs []LabeledRateLimitConfigSet,
 	clusters ...string, // the set of clusters to apply the snapshot to. only required for multicluster snapshots.
 ) Snapshot {
@@ -194,6 +203,7 @@ func NewSnapshot(
 		virtualServices:       virtualServices,
 		sidecars:              sidecars,
 		authorizationPolicies: authorizationPolicies,
+		peerAuthentications:   peerAuthentications,
 		rateLimitConfigs:      rateLimitConfigs,
 		clusters:              clusters,
 	}
@@ -218,6 +228,7 @@ func NewLabelPartitionedSnapshot(
 	sidecars networking_istio_io_v1alpha3_sets.SidecarSet,
 
 	authorizationPolicies security_istio_io_v1beta1_sets.AuthorizationPolicySet,
+	peerAuthentications security_istio_io_v1beta1_sets.PeerAuthenticationSet,
 
 	rateLimitConfigs ratelimit_solo_io_v1alpha1_sets.RateLimitConfigSet,
 	clusters ...string, // the set of clusters to apply the snapshot to. only required for multicluster snapshots.
@@ -263,6 +274,10 @@ func NewLabelPartitionedSnapshot(
 	if err != nil {
 		return nil, err
 	}
+	partitionedPeerAuthentications, err := partitionPeerAuthenticationsByLabel(labelKey, peerAuthentications)
+	if err != nil {
+		return nil, err
+	}
 	partitionedRateLimitConfigs, err := partitionRateLimitConfigsByLabel(labelKey, rateLimitConfigs)
 	if err != nil {
 		return nil, err
@@ -281,6 +296,7 @@ func NewLabelPartitionedSnapshot(
 		partitionedVirtualServices,
 		partitionedSidecars,
 		partitionedAuthorizationPolicies,
+		partitionedPeerAuthentications,
 		partitionedRateLimitConfigs,
 		clusters...,
 	), nil
@@ -305,6 +321,7 @@ func NewSinglePartitionedSnapshot(
 	sidecars networking_istio_io_v1alpha3_sets.SidecarSet,
 
 	authorizationPolicies security_istio_io_v1beta1_sets.AuthorizationPolicySet,
+	peerAuthentications security_istio_io_v1beta1_sets.PeerAuthenticationSet,
 
 	rateLimitConfigs ratelimit_solo_io_v1alpha1_sets.RateLimitConfigSet,
 	clusters ...string, // the set of clusters to apply the snapshot to. only required for multicluster snapshots.
@@ -350,6 +367,10 @@ func NewSinglePartitionedSnapshot(
 	if err != nil {
 		return nil, err
 	}
+	labeledPeerAuthentications, err := NewLabeledPeerAuthenticationSet(peerAuthentications, snapshotLabels)
+	if err != nil {
+		return nil, err
+	}
 	labeledRateLimitConfigs, err := NewLabeledRateLimitConfigSet(rateLimitConfigs, snapshotLabels)
 	if err != nil {
 		return nil, err
@@ -368,6 +389,7 @@ func NewSinglePartitionedSnapshot(
 		[]LabeledVirtualServiceSet{labeledVirtualServices},
 		[]LabeledSidecarSet{labeledSidecars},
 		[]LabeledAuthorizationPolicySet{labeledAuthorizationPolicies},
+		[]LabeledPeerAuthenticationSet{labeledPeerAuthentications},
 		[]LabeledRateLimitConfigSet{labeledRateLimitConfigs},
 		clusters...,
 	), nil
@@ -405,6 +427,9 @@ func (s *snapshot) ApplyLocalCluster(ctx context.Context, cli client.Client, err
 		genericLists = append(genericLists, outputSet.Generic())
 	}
 	for _, outputSet := range s.authorizationPolicies {
+		genericLists = append(genericLists, outputSet.Generic())
+	}
+	for _, outputSet := range s.peerAuthentications {
 		genericLists = append(genericLists, outputSet.Generic())
 	}
 	for _, outputSet := range s.rateLimitConfigs {
@@ -449,6 +474,9 @@ func (s *snapshot) ApplyMultiCluster(ctx context.Context, multiClusterClient mul
 		genericLists = append(genericLists, outputSet.Generic())
 	}
 	for _, outputSet := range s.authorizationPolicies {
+		genericLists = append(genericLists, outputSet.Generic())
+	}
+	for _, outputSet := range s.peerAuthentications {
 		genericLists = append(genericLists, outputSet.Generic())
 	}
 	for _, outputSet := range s.rateLimitConfigs {
@@ -583,6 +611,17 @@ func (s *snapshot) ForEachObject(handleObject func(cluster string, gvk schema.Gr
 				Group:   "security.istio.io",
 				Version: "v1beta1",
 				Kind:    "AuthorizationPolicy",
+			}
+			handleObject(cluster, gvk, obj)
+		}
+	}
+	for _, set := range s.peerAuthentications {
+		for _, obj := range set.Set().List() {
+			cluster := obj.GetClusterName()
+			gvk := schema.GroupVersionKind{
+				Group:   "security.istio.io",
+				Version: "v1beta1",
+				Kind:    "PeerAuthentication",
 			}
 			handleObject(cluster, gvk, obj)
 		}
@@ -1041,6 +1080,50 @@ func partitionAuthorizationPoliciesByLabel(labelKey string, set security_istio_i
 	return partitionedAuthorizationPolicies, nil
 }
 
+func partitionPeerAuthenticationsByLabel(labelKey string, set security_istio_io_v1beta1_sets.PeerAuthenticationSet) ([]LabeledPeerAuthenticationSet, error) {
+	setsByLabel := map[string]security_istio_io_v1beta1_sets.PeerAuthenticationSet{}
+
+	for _, obj := range set.List() {
+		if obj.Labels == nil {
+			return nil, MissingRequiredLabelError(labelKey, "PeerAuthentication", obj)
+		}
+		labelValue := obj.Labels[labelKey]
+		if labelValue == "" {
+			return nil, MissingRequiredLabelError(labelKey, "PeerAuthentication", obj)
+		}
+
+		setForValue, ok := setsByLabel[labelValue]
+		if !ok {
+			setForValue = security_istio_io_v1beta1_sets.NewPeerAuthenticationSet()
+			setsByLabel[labelValue] = setForValue
+		}
+		setForValue.Insert(obj)
+	}
+
+	// partition by label key
+	var partitionedPeerAuthentications []LabeledPeerAuthenticationSet
+
+	for labelValue, setForValue := range setsByLabel {
+		labels := map[string]string{labelKey: labelValue}
+
+		partitionedSet, err := NewLabeledPeerAuthenticationSet(setForValue, labels)
+		if err != nil {
+			return nil, err
+		}
+
+		partitionedPeerAuthentications = append(partitionedPeerAuthentications, partitionedSet)
+	}
+
+	// sort for idempotency
+	sort.SliceStable(partitionedPeerAuthentications, func(i, j int) bool {
+		leftLabelValue := partitionedPeerAuthentications[i].Labels()[labelKey]
+		rightLabelValue := partitionedPeerAuthentications[j].Labels()[labelKey]
+		return leftLabelValue < rightLabelValue
+	})
+
+	return partitionedPeerAuthentications, nil
+}
+
 func partitionRateLimitConfigsByLabel(labelKey string, set ratelimit_solo_io_v1alpha1_sets.RateLimitConfigSet) ([]LabeledRateLimitConfigSet, error) {
 	setsByLabel := map[string]ratelimit_solo_io_v1alpha1_sets.RateLimitConfigSet{}
 
@@ -1125,6 +1208,10 @@ func (s snapshot) AuthorizationPolicies() []LabeledAuthorizationPolicySet {
 	return s.authorizationPolicies
 }
 
+func (s snapshot) PeerAuthentications() []LabeledPeerAuthenticationSet {
+	return s.peerAuthentications
+}
+
 func (s snapshot) RateLimitConfigs() []LabeledRateLimitConfigSet {
 	return s.rateLimitConfigs
 }
@@ -1185,6 +1272,11 @@ func (s snapshot) MarshalJSON() ([]byte, error) {
 		authorizationPolicySet = authorizationPolicySet.Union(set.Set())
 	}
 	snapshotMap["authorizationPolicies"] = authorizationPolicySet.List()
+	peerAuthenticationSet := security_istio_io_v1beta1_sets.NewPeerAuthenticationSet()
+	for _, set := range s.peerAuthentications {
+		peerAuthenticationSet = peerAuthenticationSet.Union(set.Set())
+	}
+	snapshotMap["peerAuthentications"] = peerAuthenticationSet.List()
 
 	rateLimitConfigSet := ratelimit_solo_io_v1alpha1_sets.NewRateLimitConfigSet()
 	for _, set := range s.rateLimitConfigs {
@@ -1877,6 +1969,74 @@ func (l labeledAuthorizationPolicySet) Generic() output.ResourceList {
 	}
 }
 
+// LabeledPeerAuthenticationSet represents a set of peerAuthentications
+// which share a common set of labels.
+// These labels are used to find diffs between PeerAuthenticationSets.
+type LabeledPeerAuthenticationSet interface {
+	// returns the set of Labels shared by this PeerAuthenticationSet
+	Labels() map[string]string
+
+	// returns the set of PeerAuthenticationes with the given labels
+	Set() security_istio_io_v1beta1_sets.PeerAuthenticationSet
+
+	// converts the set to a generic format which can be applied by the Snapshot.Apply functions
+	Generic() output.ResourceList
+}
+
+type labeledPeerAuthenticationSet struct {
+	set    security_istio_io_v1beta1_sets.PeerAuthenticationSet
+	labels map[string]string
+}
+
+func NewLabeledPeerAuthenticationSet(set security_istio_io_v1beta1_sets.PeerAuthenticationSet, labels map[string]string) (LabeledPeerAuthenticationSet, error) {
+	// validate that each PeerAuthentication contains the labels, else this is not a valid LabeledPeerAuthenticationSet
+	for _, item := range set.List() {
+		for k, v := range labels {
+			// k=v must be present in the item
+			if item.Labels[k] != v {
+				return nil, eris.Errorf("internal error: %v=%v missing on PeerAuthentication %v", k, v, item.Name)
+			}
+		}
+	}
+
+	return &labeledPeerAuthenticationSet{set: set, labels: labels}, nil
+}
+
+func (l *labeledPeerAuthenticationSet) Labels() map[string]string {
+	return l.labels
+}
+
+func (l *labeledPeerAuthenticationSet) Set() security_istio_io_v1beta1_sets.PeerAuthenticationSet {
+	return l.set
+}
+
+func (l labeledPeerAuthenticationSet) Generic() output.ResourceList {
+	var desiredResources []ezkube.Object
+	for _, desired := range l.set.List() {
+		desiredResources = append(desiredResources, desired)
+	}
+
+	// enable list func for garbage collection
+	listFunc := func(ctx context.Context, cli client.Client) ([]ezkube.Object, error) {
+		var list security_istio_io_v1beta1.PeerAuthenticationList
+		if err := cli.List(ctx, &list, client.MatchingLabels(l.labels)); err != nil {
+			return nil, err
+		}
+		var items []ezkube.Object
+		for _, item := range list.Items {
+			item := item // pike
+			items = append(items, &item)
+		}
+		return items, nil
+	}
+
+	return output.ResourceList{
+		Resources:    desiredResources,
+		ListFunc:     listFunc,
+		ResourceKind: "PeerAuthentication",
+	}
+}
+
 // LabeledRateLimitConfigSet represents a set of rateLimitConfigs
 // which share a common set of labels.
 // These labels are used to find diffs between RateLimitConfigSets.
@@ -1963,6 +2123,7 @@ type builder struct {
 	sidecars         networking_istio_io_v1alpha3_sets.SidecarSet
 
 	authorizationPolicies security_istio_io_v1beta1_sets.AuthorizationPolicySet
+	peerAuthentications   security_istio_io_v1beta1_sets.PeerAuthenticationSet
 
 	rateLimitConfigs ratelimit_solo_io_v1alpha1_sets.RateLimitConfigSet
 }
@@ -1985,6 +2146,7 @@ func NewBuilder(ctx context.Context, name string) *builder {
 		sidecars:         networking_istio_io_v1alpha3_sets.NewSidecarSet(),
 
 		authorizationPolicies: security_istio_io_v1beta1_sets.NewAuthorizationPolicySet(),
+		peerAuthentications:   security_istio_io_v1beta1_sets.NewPeerAuthenticationSet(),
 
 		rateLimitConfigs: ratelimit_solo_io_v1alpha1_sets.NewRateLimitConfigSet(),
 	}
@@ -2053,6 +2215,12 @@ type Builder interface {
 
 	// get the collected AuthorizationPolicies
 	GetAuthorizationPolicies() security_istio_io_v1beta1_sets.AuthorizationPolicySet
+
+	// add PeerAuthentications to the collected outputs
+	AddPeerAuthentications(peerAuthentications ...*security_istio_io_v1beta1.PeerAuthentication)
+
+	// get the collected PeerAuthentications
+	GetPeerAuthentications() security_istio_io_v1beta1_sets.PeerAuthenticationSet
 
 	// add RateLimitConfigs to the collected outputs
 	AddRateLimitConfigs(rateLimitConfigs ...*ratelimit_solo_io_v1alpha1.RateLimitConfig)
@@ -2166,6 +2334,14 @@ func (b *builder) AddAuthorizationPolicies(authorizationPolicies ...*security_is
 		b.authorizationPolicies.Insert(obj)
 	}
 }
+func (b *builder) AddPeerAuthentications(peerAuthentications ...*security_istio_io_v1beta1.PeerAuthentication) {
+	for _, obj := range peerAuthentications {
+		if obj == nil {
+			continue
+		}
+		b.peerAuthentications.Insert(obj)
+	}
+}
 func (b *builder) AddRateLimitConfigs(rateLimitConfigs ...*ratelimit_solo_io_v1alpha1.RateLimitConfig) {
 	for _, obj := range rateLimitConfigs {
 		if obj == nil {
@@ -2208,6 +2384,9 @@ func (b *builder) GetSidecars() networking_istio_io_v1alpha3_sets.SidecarSet {
 func (b *builder) GetAuthorizationPolicies() security_istio_io_v1beta1_sets.AuthorizationPolicySet {
 	return b.authorizationPolicies
 }
+func (b *builder) GetPeerAuthentications() security_istio_io_v1beta1_sets.PeerAuthenticationSet {
+	return b.peerAuthentications
+}
 
 func (b *builder) GetRateLimitConfigs() ratelimit_solo_io_v1alpha1_sets.RateLimitConfigSet {
 	return b.rateLimitConfigs
@@ -2231,6 +2410,7 @@ func (b *builder) BuildLabelPartitionedSnapshot(labelKey string) (Snapshot, erro
 		b.sidecars,
 
 		b.authorizationPolicies,
+		b.peerAuthentications,
 
 		b.rateLimitConfigs,
 		b.clusters...,
@@ -2255,6 +2435,7 @@ func (b *builder) BuildSinglePartitionedSnapshot(snapshotLabels map[string]strin
 		b.sidecars,
 
 		b.authorizationPolicies,
+		b.peerAuthentications,
 
 		b.rateLimitConfigs,
 		b.clusters...,
@@ -2287,6 +2468,7 @@ func (b *builder) Merge(other Builder) {
 	b.AddSidecars(other.GetSidecars().List()...)
 
 	b.AddAuthorizationPolicies(other.GetAuthorizationPolicies().List()...)
+	b.AddPeerAuthentications(other.GetPeerAuthentications().List()...)
 
 	b.AddRateLimitConfigs(other.GetRateLimitConfigs().List()...)
 	for _, cluster := range other.Clusters() {
@@ -2332,6 +2514,9 @@ func (b *builder) Clone() Builder {
 
 	for _, authorizationPolicy := range b.GetAuthorizationPolicies().List() {
 		clone.AddAuthorizationPolicies(authorizationPolicy.DeepCopy())
+	}
+	for _, peerAuthentication := range b.GetPeerAuthentications().List() {
+		clone.AddPeerAuthentications(peerAuthentication.DeepCopy())
 	}
 
 	for _, rateLimitConfig := range b.GetRateLimitConfigs().List() {
@@ -2440,6 +2625,15 @@ func (b *builder) Generic() resource.ClusterSnapshot {
 			Group:   "security.istio.io",
 			Version: "v1beta1",
 			Kind:    "AuthorizationPolicy",
+		}
+		clusterSnapshots.Insert(cluster, gvk, obj)
+	}
+	for _, obj := range b.GetPeerAuthentications().List() {
+		cluster := obj.GetClusterName()
+		gvk := schema.GroupVersionKind{
+			Group:   "security.istio.io",
+			Version: "v1beta1",
+			Kind:    "PeerAuthentication",
 		}
 		clusterSnapshots.Insert(cluster, gvk, obj)
 	}
@@ -2553,6 +2747,15 @@ func (b *builder) ForEachObject(handleObject func(cluster string, gvk schema.Gro
 			Group:   "security.istio.io",
 			Version: "v1beta1",
 			Kind:    "AuthorizationPolicy",
+		}
+		handleObject(cluster, gvk, obj)
+	}
+	for _, obj := range b.GetPeerAuthentications().List() {
+		cluster := obj.GetClusterName()
+		gvk := schema.GroupVersionKind{
+			Group:   "security.istio.io",
+			Version: "v1beta1",
+			Kind:    "PeerAuthentication",
 		}
 		handleObject(cluster, gvk, obj)
 	}

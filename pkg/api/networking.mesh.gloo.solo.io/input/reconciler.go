@@ -51,6 +51,7 @@ import (
 // * VirtualServices
 // * Sidecars
 // * AuthorizationPolicies
+// * PeerAuthentications
 // * RateLimitConfigs
 // from a remote cluster.
 // * WasmDeployments
@@ -128,6 +129,8 @@ func RegisterInputReconciler(
 
 	// initialize AuthorizationPolicies reconcile loop for remote clusters
 	security_istio_io_v1beta1_controllers.NewMulticlusterAuthorizationPolicyReconcileLoop("AuthorizationPolicy", clusters, options.Remote.AuthorizationPolicies).AddMulticlusterAuthorizationPolicyReconciler(ctx, &remoteInputReconciler{base: base}, options.Remote.Predicates...)
+	// initialize PeerAuthentications reconcile loop for remote clusters
+	security_istio_io_v1beta1_controllers.NewMulticlusterPeerAuthenticationReconcileLoop("PeerAuthentication", clusters, options.Remote.PeerAuthentications).AddMulticlusterPeerAuthenticationReconciler(ctx, &remoteInputReconciler{base: base}, options.Remote.Predicates...)
 
 	// initialize RateLimitConfigs reconcile loop for remote clusters
 	ratelimit_solo_io_v1alpha1_controllers.NewMulticlusterRateLimitConfigReconcileLoop("RateLimitConfig", clusters, options.Remote.RateLimitConfigs).AddMulticlusterRateLimitConfigReconciler(ctx, &remoteInputReconciler{base: base}, options.Remote.Predicates...)
@@ -244,6 +247,8 @@ type RemoteReconcileOptions struct {
 
 	// Options for reconciling AuthorizationPolicies
 	AuthorizationPolicies reconcile.Options
+	// Options for reconciling PeerAuthentications
+	PeerAuthentications reconcile.Options
 
 	// Options for reconciling RateLimitConfigs
 	RateLimitConfigs reconcile.Options
@@ -397,6 +402,21 @@ func (r *remoteInputReconciler) ReconcileAuthorizationPolicy(clusterName string,
 }
 
 func (r *remoteInputReconciler) ReconcileAuthorizationPolicyDeletion(clusterName string, obj reconcile.Request) error {
+	ref := &sk_core_v1.ClusterObjectRef{
+		Name:        obj.Name,
+		Namespace:   obj.Namespace,
+		ClusterName: clusterName,
+	}
+	_, err := r.base.ReconcileRemoteGeneric(ref)
+	return err
+}
+
+func (r *remoteInputReconciler) ReconcilePeerAuthentication(clusterName string, obj *security_istio_io_v1beta1.PeerAuthentication) (reconcile.Result, error) {
+	obj.ClusterName = clusterName
+	return r.base.ReconcileRemoteGeneric(obj)
+}
+
+func (r *remoteInputReconciler) ReconcilePeerAuthenticationDeletion(clusterName string, obj reconcile.Request) error {
 	ref := &sk_core_v1.ClusterObjectRef{
 		Name:        obj.Name,
 		Namespace:   obj.Namespace,

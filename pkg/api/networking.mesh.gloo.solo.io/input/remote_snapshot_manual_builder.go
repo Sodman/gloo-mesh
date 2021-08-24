@@ -38,6 +38,7 @@ type InputRemoteSnapshotManualBuilder struct {
 	sidecars         networking_istio_io_v1alpha3_sets.SidecarSet
 
 	authorizationPolicies security_istio_io_v1beta1_sets.AuthorizationPolicySet
+	peerAuthentications   security_istio_io_v1beta1_sets.PeerAuthenticationSet
 
 	rateLimitConfigs ratelimit_solo_io_v1alpha1_sets.RateLimitConfigSet
 }
@@ -59,6 +60,7 @@ func NewInputRemoteSnapshotManualBuilder(name string) *InputRemoteSnapshotManual
 		sidecars:         networking_istio_io_v1alpha3_sets.NewSidecarSet(),
 
 		authorizationPolicies: security_istio_io_v1beta1_sets.NewAuthorizationPolicySet(),
+		peerAuthentications:   security_istio_io_v1beta1_sets.NewPeerAuthenticationSet(),
 
 		rateLimitConfigs: ratelimit_solo_io_v1alpha1_sets.NewRateLimitConfigSet(),
 	}
@@ -81,6 +83,7 @@ func (i *InputRemoteSnapshotManualBuilder) Build() RemoteSnapshot {
 		i.sidecars,
 
 		i.authorizationPolicies,
+		i.peerAuthentications,
 
 		i.rateLimitConfigs,
 	)
@@ -123,6 +126,10 @@ func (i *InputRemoteSnapshotManualBuilder) AddSidecars(sidecars []*networking_is
 }
 func (i *InputRemoteSnapshotManualBuilder) AddAuthorizationPolicies(authorizationPolicies []*security_istio_io_v1beta1.AuthorizationPolicy) *InputRemoteSnapshotManualBuilder {
 	i.authorizationPolicies.Insert(authorizationPolicies...)
+	return i
+}
+func (i *InputRemoteSnapshotManualBuilder) AddPeerAuthentications(peerAuthentications []*security_istio_io_v1beta1.PeerAuthentication) *InputRemoteSnapshotManualBuilder {
+	i.peerAuthentications.Insert(peerAuthentications...)
 	return i
 }
 func (i *InputRemoteSnapshotManualBuilder) AddRateLimitConfigs(rateLimitConfigs []*ratelimit_solo_io_v1alpha1.RateLimitConfig) *InputRemoteSnapshotManualBuilder {
