@@ -1,4 +1,6 @@
 changelog:
-  - type: FIX
-    description: Adds verification logic to check RateLimitConfig crd does exist before writing snapshot.
-    issueLink: https://github.com/solo-io/gloo-mesh-enterprise/issues/987
+  - type: DEPENDENCY_BUMP
+    dependencyOwner: solo-io
+    dependencyRepo: skv2
+    dependencyTag: v0.19.4
+    description: Add check that if crd does not exist, do not attempt to sync the output snapshot for that resource.
