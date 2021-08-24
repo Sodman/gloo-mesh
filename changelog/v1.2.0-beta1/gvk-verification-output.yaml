@@ -1,4 +1,0 @@
-changelog:
-  - type: FIX
-    description: Adds verification logic to check RateLimitConfig crd does exist before writing snapshot.
-    issueLink: https://github.com/solo-io/gloo-mesh-enterprise/issues/987
