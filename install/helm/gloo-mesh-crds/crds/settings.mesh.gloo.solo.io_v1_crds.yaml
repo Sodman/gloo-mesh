@@ -5,7 +5,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     crd.solo.io/specHash: 62c4be1fffd45d7d
-    crd.solo.io/version: 1.2.0
+    crd.solo.io/version: 1.1.0
   labels:
     app: gloo-mesh
     app.kubernetes.io/name: gloo-mesh
@@ -69,7 +69,10 @@ spec:
                   description: Istio TLS settings.
                   properties:
                     tlsMode:
-                      description: TLS connection mode
+                      description: |-
+                        TLS connection mode
+                        Note: If this is set to STRICT, and settings.spec.peerAuth.peerAuthTlsMode is UNSET (or vise verse), translation will fail, since
+                        we cannot both mandate and disable TLS at different junctures.
                       enum:
                       - DISABLE
                       - SIMPLE
@@ -96,6 +99,29 @@ spec:
                     type: boolean
                 type: object
               type: array
+            peerAuth:
+              description: Enable and configure the creation of PeerAuthentications
+                to control mesh connections.
+              properties:
+                enabled:
+                  description: |-
+                    Enable the creation of PeerAuthentications on meshes to manage TLS connections.
+                    Defaults to true.
+                  type: boolean
+                peerAuthTlsMode:
+                  description: |-
+                    The default mutualTls mode for automatically generated Peer Authentications to use.
+                    The enum values correspond to the values listed [by istio](https://istio.io/latest/docs/reference/config/security/peer_authentication/#PeerAuthentication-MutualTLS-Mode)
+                    Defaults to UNSET, which behaves like PERMISSIVE.
+                    Note: If this is set to STRICT, and settings.mtls.istio.tlsMode is UNSET (or vise verse), translation will fail, since
+                    we cannot both mandate and disable TLS at different junctures.
+                  enum:
+                  - UNSET
+                  - DISABLE
+                  - PERMISSIVE
+                  - STRICT
+                  type: string
+              type: object
             relay:
               description: Enable and configure use of Relay mode to communicate with
                 remote clusters. This is an enterprise-only feature.
@@ -162,7 +188,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     crd.solo.io/specHash: 6d3a92b5d82b018
-    crd.solo.io/version: 1.2.0
+    crd.solo.io/version: 1.1.0
   labels:
     app: gloo-mesh
     app.kubernetes.io/name: gloo-mesh
