@@ -2,4 +2,4 @@ changelog:
   - type: NEW_FEATURE
     issueLink: https://github.com/solo-io/gloo-mesh-enterprise/issues/833
     resolvesIssue: false
-    description: Add api changes for peer auth creation.
+    description: Add API changes for creating peer authentication, including matching mTLS settings for Istio mesh connections.
