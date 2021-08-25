@@ -52,7 +52,7 @@ message PeerAuthenticationSettings {
     // Istio MutualTLS settings
     enum MutualTLS {
 
-        // Inherit from parent, if has one. Otherwise treated as PERMISSIVE.
+        // Inherited from parent, if any. Otherwise treated as PERMISSIVE.
         UNSET = 0;
 
         // Connection is not tunneled.
