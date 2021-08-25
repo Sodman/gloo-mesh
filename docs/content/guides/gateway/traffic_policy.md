@@ -415,4 +415,88 @@ spec:
 
 When the final gateway route `multi-destination-route` (requests with a path prefix of `/some-service`) is created, the split will be 40/30/30 for `ratings`/`reviews-v2`/`reviews-v3`, respectively. That's because at the gateway level, the traffic is split 40/60 between `ratings` and `reviews`. Then once the `TrafficPolicy`'s `trafficShift` is applied, the traffic going to the `reviews` service is split 50/50 between v2 and v3. Note that this `TrafficPolicy` _also_ applies to East/West traffic, meaning requests from within the mesh to the `reviews` service on `cluster-2` will be split 50/50 across reviews-v2 and reviews-v3.
 
+### Limitations of using TrafficPolicy with Gateway resources
+
+One limitation to take into consideration when using a `TrafficPolicy` with to add policies to routes controlled by a `VirtualHost` or `RouteTable`, is that the `requestMatchers` field on the `TrafficPolicy` will be ignored for the gateway traffic. In other words, the `requestMatchers` field _only_ applies to East/West traffic in the mesh, and does not apply to gateway traffic.
+
+So how do you apply a `TrafficPolicy` to only a subset of traffic on a route? This can be achieved by adding another route to the `VirtualHost` or `RouteTable`, and selecting _only_ that route from the `TrafficPolicy`, using the label matchers. See [Applying a TrafficPolicy to a subset of fields]({{<ref "#applying-a-trafficpolicy-to-a-subset-of-fields">}}).
+
+As an example, here's how you might have a `TrafficPolicy` which only applies a timeout to requests containing the header "badnetwork: yes".
+
+```yaml
+apiVersion: networking.enterprise.mesh.gloo.solo.io/v1beta1
+kind: VirtualHost
+metadata:
+  name: demo-virtualhost
+  namespace: gloo-mesh
+spec:
+  domains:
+  - www.example.com
+  routes:
+  # -- New Route with the prefix header matcher
+  - matchers:
+    # Same URI matcher as before
+    - uri:
+        prefix: /ratings
+    # Header Matcher for the request
+    - headers:
+      - name: badnetwork
+        value: "yes"
+    name: ratings-short-timeout
+    # Put labels on the Route so it can be selected by the TrafficPolicy
+    labels:
+      "timeout-policy": "short"
+    routeAction:
+      destinations:
+      - kubeService:
+          clusterName: cluster-1
+          name: ratings
+          namespace: bookinfo
+# -- Original route will handle traffic without the header
+  - matchers:
+    - uri:
+        prefix: /ratings
+    name: ratings-default
+    routeAction:
+      destinations:
+      - kubeService:
+          clusterName: cluster-1
+          name: ratings
+          namespace: bookinfo
+---
+# TrafficPolicy for 2s timeouts
+apiVersion: networking.mesh.gloo.solo.io/v1
+kind: TrafficPolicy
+metadata:
+  namespace: gloo-mesh
+  name: short-timeout-policy
+spec:
+  destinationSelector:
+  - kubeServiceRefs:
+      services:
+        - clusterName: cluster-1
+          name: ratings
+          namespace: bookinfo
+  routeSelector:
+    - virtualHostSelector:
+        namespaces:
+        - gloo-mesh
+      # Select only the route with this label
+      routeLabelMatcher:
+        "timeout-policy": "short"
+  policy:
+    requestTimeout: 2s
+```
+
+We can confirm that this TrafficPolicy has been applied only to the route we wanted by checking the `status` on the `VirtualHost`:
+
+```shell
+kubectl get virtualhost demo-virtualhost -n gloo-mesh -o=jsonpath='{.status.appliedTrafficPolicies[0].ref}'
+{"name":"short-timeout-policy","namespace":"gloo-mesh"} # The traffic Policy we were expecting
+
+kubectl get virtualhost demo-virtualhost -n gloo-mesh -o=jsonpath='{.status.appliedTrafficPolicies[0].routes}'
+["ratings-short-timeout"] # TrafficPolicy is applied only to the route to which we wanted the policy applied, and not the other route.
+```
+
+### API Reference
 For more information on what kinds of policies can be applied, see the full `TrafficPolicy` API [here]({{% versioned_link_path fromRoot="/reference/api/github.com.solo-io.gloo-mesh.api.networking.v1.traffic_policy/" %}}).
