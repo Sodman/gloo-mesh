@@ -61,7 +61,7 @@ message PeerAuthenticationSettings {
         // Connection can be either plaintext or mTLS tunnel.
         PERMISSIVE = 2;
 
-        // Connection is an mTLS tunnel (TLS with client cert must be presented).
+        // Connection is encrypted through an mTLS tunnel (TLS with client cert must be presented).
         STRICT = 3;
     };
 }
