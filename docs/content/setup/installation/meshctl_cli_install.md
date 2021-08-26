@@ -64,7 +64,7 @@ Do you have multiple cluster environments that require different versions of Glo
 
 ## Upgrade the CLI
 
-To upgrade, re-install the CLI. You can install the [latest]({{<ref "#quick-installation>}})) or a [specific version]({{<ref "#install-a-specific-version-of-the-cli>}}). 
+To upgrade, re-install the CLI. You can install the [latest]({{<ref "#quick-installation>}})) or a [specific version]({{<ref "#install-a-specific-version-of-the-cli>}}). Make sure that your `meshctl` and Gloo Mesh versions match.
 
 {{% notice note %}}
 Upgrading the `meshctl` CLI does _not_ [upgrade the Gloo Mesh version]({{% versioned_link_path fromRoot="/operations/upgrading/" %}}) that you run in your clusters.
@@ -77,6 +77,15 @@ To uninstall `meshctl`, you can delete the executable file from your system, suc
 ```shell
 rm ~/.gloo-mesh/bin/meshctl
 ```
+
+## Skew policy
+
+Use the same version of the `meshctl` CLI as the Gloo Mesh version that is installed in your clusters.
+
+* Slight skews within minor versions typically work, such as `meshctl` 1.0.7 and Gloo Mesh 1.0.10. 
+* Compatibility across beta versions is not guaranteed, even within minor version skews.
+* To resolve bugs in `meshctl`, you might have to upgrade the entire CLI to a specific or latest version.
+
 
 ## Reference documentation
 
