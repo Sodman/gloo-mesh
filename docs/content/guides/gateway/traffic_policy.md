@@ -417,11 +417,11 @@ When the final gateway route `multi-destination-route` (requests with a path pre
 
 ### Limitations of using TrafficPolicy with Gateway resources
 
-One limitation to take into consideration when using a `TrafficPolicy` to add policies to routes controlled by a `VirtualHost` or `RouteTable`, is that the `requestMatchers` field on the `TrafficPolicy` will be ignored for the gateway traffic. In other words, the `requestMatchers` field _only_ applies to East/West traffic in the mesh, and does not apply to gateway traffic.
+When you use a `TrafficPolicy` to add policies to routes controlled by a `VirtualHost` or `RouteTable`, note that the `requestMatchers` field in the `TrafficPolicy` applies _only_ to east-west traffic between services in the mesh, and is ignored for north-south gateway traffic.
 
-So how do you apply a `TrafficPolicy` to only a subset of traffic on a route? This can be achieved by adding another route to the `VirtualHost` or `RouteTable`, and selecting _only_ that route from the `TrafficPolicy`, using the label matchers. See [Applying a TrafficPolicy to a subset of fields]({{<ref "#applying-a-trafficpolicy-to-a-subset-of-fields">}}).
+So how do you apply a `TrafficPolicy` to only a subset of traffic on a route? You can add another route to the `VirtualHost` or `RouteTable` and use the label matchers to select _only_ that route from the `TrafficPolicy`. For more information, see [Applying a TrafficPolicy to a subset of fields]({{<ref "#applying-a-trafficpolicy-to-a-subset-of-fields">}}).
 
-As an example, here's how you might have a `TrafficPolicy` which only applies a timeout to requests containing the header "badnetwork: yes".
+As an example, the following `TrafficPolicy` applies a timeout only to requests that contain the header "badnetwork: yes".
 
 ```yaml
 apiVersion: networking.enterprise.mesh.gloo.solo.io/v1beta1
@@ -488,14 +488,14 @@ spec:
     requestTimeout: 2s
 ```
 
-We can confirm that this TrafficPolicy has been applied only to the route we wanted by checking the `status` on the `VirtualHost`:
+To confirm that this `TrafficPolicy` is applied only to the expected route, you can check the `status` on the `VirtualHost`:
 
 ```shell
 kubectl get virtualhost demo-virtualhost -n gloo-mesh -o=jsonpath='{.status.appliedTrafficPolicies[0].ref}'
-{"name":"short-timeout-policy","namespace":"gloo-mesh"} # The traffic Policy we were expecting
+{"name":"short-timeout-policy","namespace":"gloo-mesh"} # The expected TrafficPolicy
 
 kubectl get virtualhost demo-virtualhost -n gloo-mesh -o=jsonpath='{.status.appliedTrafficPolicies[0].routes}'
-["ratings-short-timeout"] # TrafficPolicy is applied only to the route to which we wanted the policy applied, and not the other route.
+["ratings-short-timeout"] # The TrafficPolicy is applied only to the expected route, and not to the other route
 ```
 
 ### API Reference
