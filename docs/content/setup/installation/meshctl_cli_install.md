@@ -62,12 +62,12 @@ Good job! You now have the version of `meshctl` that you want installed. Next, [
 
 Do you have multiple cluster environments that require different versions of Gloo Mesh, Istio, and Kubernetes? Consider downloading each `meshctl`, `istioctl`, and `kubectl` version binary file to a separate directory. Then, you can set up an alias in your local command line interface profile to point to the binary file directory that matches the version of the cluster environment that you want to work with.
 
-## Update the CLI
+## Upgrade the CLI
 
-To update, re-install the CLI. You can install the [latest]({{<ref "#quick-installation>}})) or a [specific version]({{<ref "#install-a-specific-version-of-the-cli>}}). 
+To upgrade, re-install the CLI. You can install the [latest]({{<ref "#quick-installation>}})) or a [specific version]({{<ref "#install-a-specific-version-of-the-cli>}}). 
 
 {{% notice note %}}
-Updating the `meshctl` CLI does _not_ [upgrade the Gloo Mesh version]({{% versioned_link_path fromRoot="/operations/upgrading/" %}}) that you run in your clusters.
+Upgrading the `meshctl` CLI does _not_ [upgrade the Gloo Mesh version]({{% versioned_link_path fromRoot="/operations/upgrading/" %}}) that you run in your clusters.
 {{% /notice %}}
 
 ## Uninstall the CLI
@@ -76,4 +76,12 @@ To uninstall `meshctl`, you can delete the executable file from your system, suc
 
 ```shell
 rm ~/.gloo-mesh/bin/meshctl
+```
+
+## Reference documentation
+
+For more information about each `meshctl` command, see the [CLI documentation]({{< versioned_link_path fromRoot="/reference/cli/" >}}) or run the help flag for a command.
+
+```shell
+meshctl cluster --help
 ```
