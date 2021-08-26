@@ -417,7 +417,7 @@ When the final gateway route `multi-destination-route` (requests with a path pre
 
 ### Limitations of using TrafficPolicy with Gateway resources
 
-One limitation to take into consideration when using a `TrafficPolicy` with to add policies to routes controlled by a `VirtualHost` or `RouteTable`, is that the `requestMatchers` field on the `TrafficPolicy` will be ignored for the gateway traffic. In other words, the `requestMatchers` field _only_ applies to East/West traffic in the mesh, and does not apply to gateway traffic.
+One limitation to take into consideration when using a `TrafficPolicy` to add policies to routes controlled by a `VirtualHost` or `RouteTable`, is that the `requestMatchers` field on the `TrafficPolicy` will be ignored for the gateway traffic. In other words, the `requestMatchers` field _only_ applies to East/West traffic in the mesh, and does not apply to gateway traffic.
 
 So how do you apply a `TrafficPolicy` to only a subset of traffic on a route? This can be achieved by adding another route to the `VirtualHost` or `RouteTable`, and selecting _only_ that route from the `TrafficPolicy`, using the label matchers. See [Applying a TrafficPolicy to a subset of fields]({{<ref "#applying-a-trafficpolicy-to-a-subset-of-fields">}}).
 
